@@ -9,6 +9,7 @@ import RecentTransactions from '../components/dashboard/RecentTransactions';
 import { MONTHS, YEARS } from '../lib/constants';
 
 export default function DashboardPage() {
+  const ALL = 'all';
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
@@ -19,9 +20,11 @@ export default function DashboardPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      const params = { year };
+      if (month !== ALL) params.month = month;
       const [sum, txs] = await Promise.all([
-        transactionsAPI.getSummary({ month, year }),
-        transactionsAPI.getAll({ month, year, limit: 10 }),
+        transactionsAPI.getSummary(params),
+        transactionsAPI.getAll({ ...params, limit: 10 }),
       ]);
       setSummary(sum);
       setTransactions(txs.transactions);
@@ -35,10 +38,12 @@ export default function DashboardPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const prevMonth = () => {
+    if (month === ALL) return;
     if (month === 1) { setMonth(12); setYear(y => y - 1); }
     else setMonth(m => m - 1);
   };
   const nextMonth = () => {
+    if (month === ALL) return;
     if (month === 12) { setMonth(1); setYear(y => y + 1); }
     else setMonth(m => m + 1);
   };
@@ -49,11 +54,12 @@ export default function DashboardPage() {
       <div className="flex items-center gap-3 flex-wrap">
         <Button variant="outline" size="icon" onClick={prevMonth}><ChevronLeft className="h-4 w-4" /></Button>
         <div className="flex items-center gap-2">
-          <Select value={String(month)} onValueChange={v => setMonth(Number(v))}>
+          <Select value={String(month)} onValueChange={v => setMonth(v === ALL ? ALL : Number(v))}>
             <SelectTrigger className="w-36">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value={ALL}>Ano inteiro</SelectItem>
               {MONTHS.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
             </SelectContent>
           </Select>

@@ -10,7 +10,7 @@ router.use(authMiddleware);
 router.get('/', async (req, res) => {
   try {
     const { month, year, type, category, page = 1, limit = 50 } = req.query;
-    const filter = { user: req.user._id };
+    const filter = {};
 
     if (month && year) {
       filter.date = {
@@ -43,7 +43,7 @@ router.get('/', async (req, res) => {
 router.get('/summary', async (req, res) => {
   try {
     const { month, year } = req.query;
-    const filter = { user: req.user._id };
+    const filter = {};
 
     if (month && year) {
       filter.date = {
@@ -84,7 +84,7 @@ router.get('/annual', async (req, res) => {
     const endDate = new Date(year, 11, 31, 23, 59, 59);
 
     const data = await Transaction.aggregate([
-      { $match: { user: req.user._id, date: { $gte: startDate, $lte: endDate } } },
+      { $match: { date: { $gte: startDate, $lte: endDate } } },
       { $group: { _id: { month: { $month: '$date' }, type: '$type' }, total: { $sum: '$value' } } },
       { $sort: { '_id.month': 1 } },
     ]);
@@ -142,7 +142,7 @@ router.put('/:id', [
     if (!errors.isEmpty()) return res.status(400).json({ message: errors.array()[0].msg });
 
     const transaction = await Transaction.findOneAndUpdate(
-      { _id: req.params.id, user: req.user._id },
+      { _id: req.params.id },
       req.body,
       { new: true, runValidators: true }
     );
@@ -156,7 +156,7 @@ router.put('/:id', [
 // DELETE /api/transactions/:id
 router.delete('/:id', async (req, res) => {
   try {
-    const transaction = await Transaction.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+    const transaction = await Transaction.findOneAndDelete({ _id: req.params.id });
     if (!transaction) return res.status(404).json({ message: 'Transação não encontrada' });
     res.json({ message: 'Transação eliminada' });
   } catch {

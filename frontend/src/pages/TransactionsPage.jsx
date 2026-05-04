@@ -28,8 +28,9 @@ export default function TransactionsPage() {
   const fetchTransactions = useCallback(async () => {
     setLoading(true);
     try {
-      const params = { year, limit: 200 };
-      if (month !== ALL) params.month = month;
+      const params = { limit: 200 };
+      if (year !== ALL) params.year = year;
+      if (month !== ALL && year !== ALL) params.month = month;
       if (type !== ALL) params.type = type;
       if (category !== ALL) params.category = category;
       const data = await transactionsAPI.getAll(params);
@@ -89,7 +90,7 @@ export default function TransactionsPage() {
           />
         </div>
 
-        <Select value={month} onValueChange={setMonth}>
+        <Select value={month} onValueChange={setMonth} disabled={year === ALL}>
           <SelectTrigger className="w-36">
             <SelectValue placeholder="Mês" />
           </SelectTrigger>
@@ -99,11 +100,12 @@ export default function TransactionsPage() {
           </SelectContent>
         </Select>
 
-        <Select value={year} onValueChange={setYear}>
+        <Select value={year} onValueChange={v => { setYear(v); if (v === ALL) setMonth(ALL); }}>
           <SelectTrigger className="w-24">
-            <SelectValue />
+            <SelectValue placeholder="Ano" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value={ALL}>Todos</SelectItem>
             {YEARS.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
           </SelectContent>
         </Select>

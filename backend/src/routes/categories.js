@@ -9,7 +9,13 @@ router.use(authMiddleware);
 // GET /api/categories
 router.get('/', async (req, res) => {
   try {
-    const categories = await Category.find({ user: req.user._id }).sort({ isDefault: -1, name: 1 });
+    // Return unique categories by name across all users
+    const categories = await Category.aggregate([
+      { $sort: { isDefault: -1, name: 1 } },
+      { $group: { _id: '$name', doc: { $first: '$$ROOT' } } },
+      { $replaceRoot: { newRoot: '$doc' } },
+      { $sort: { isDefault: -1, name: 1 } },
+    ]);
     res.json({ categories });
   } catch {
     res.status(500).json({ message: 'Erro ao obter categorias' });
@@ -47,7 +53,7 @@ router.post('/', [
 // DELETE /api/categories/:id
 router.delete('/:id', async (req, res) => {
   try {
-    const category = await Category.findOne({ _id: req.params.id, user: req.user._id });
+    const category = await Category.findOne({ _id: req.params.id });
     if (!category) return res.status(404).json({ message: 'Categoria não encontrada' });
     if (category.isDefault) return res.status(400).json({ message: 'Não é possível eliminar categorias padrão' });
     await Category.deleteOne({ _id: req.params.id });
