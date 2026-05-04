@@ -41,8 +41,9 @@ router.post('/register', [
 
     const token = generateToken(user._id);
     res.status(201).json({ token, user: { id: user._id, name: user.name, email: user.email } });
-  } catch {
-    res.status(500).json({ message: 'Erro ao registar utilizador' });
+  } catch (err) {
+    console.error('[register]', err);
+    res.status(500).json({ message: 'Erro ao registar utilizador', detail: err.message });
   }
 });
 
@@ -63,8 +64,9 @@ router.post('/login', [
 
     const token = generateToken(user._id);
     res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
-  } catch {
-    res.status(500).json({ message: 'Erro ao fazer login' });
+  } catch (err) {
+    console.error('[login]', err);
+    res.status(500).json({ message: 'Erro ao fazer login', detail: err.message });
   }
 });
 
