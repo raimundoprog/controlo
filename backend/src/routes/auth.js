@@ -36,8 +36,16 @@ router.post('/register', [
     if (await User.findOne({ email })) return res.status(400).json({ message: 'Email já registado' });
 
     const user = await User.create({ name, email, password });
-    const categories = DEFAULT_CATEGORIES.map(c => ({ ...c, user: user._id }));
-    await Category.insertMany(categories);
+
+    // Create default categories — if this fails, remove the user so the email can be reused
+    try {
+      const categories = DEFAULT_CATEGORIES.map(c => ({ ...c, user: user._id }));
+      await Category.insertMany(categories);
+    } catch (catErr) {
+      console.error('[register] categories failed, rolling back user:', catErr);
+      await User.deleteOne({ _id: user._id });
+      return res.status(500).json({ message: 'Erro ao criar categorias. Tente novamente.', detail: catErr.message });
+    }
 
     const token = generateToken(user._id);
     res.status(201).json({ token, user: { id: user._id, name: user.name, email: user.email } });
